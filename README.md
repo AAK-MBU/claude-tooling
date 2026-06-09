@@ -86,7 +86,17 @@ Skills in `plugins/core/skills/` are triggered automatically when their descript
 
 ## Hooks
 
-Shared hooks in `plugins/core/hooks/` run on Claude Code lifecycle events (e.g. before a tool runs, after a session ends). Review what's enabled before installing, since hooks can run commands automatically.
+Shared hooks in `plugins/core/hooks/` run on Claude Code lifecycle events (e.g. before or after a tool runs). They fire automatically once the plugin is enabled.
+
+**⚠️ Hooks run shell commands with your permissions.** Review `hooks/hooks.json` and `hooks/scripts/` before installing, and require PR review on changes to this folder.
+
+### Active hooks
+
+| Event | Trigger | What it does |
+|-------|---------|--------------|
+| `PostToolUse` | After any `Edit`/`Write` | Runs the relevant test suite for the changed file — `pytest` for backend `.py`, `vitest related` for frontend `.ts`/`.svelte`/etc. On failure it feeds the output back to Claude so it fixes the break before moving on. |
+
+The test runner (`scripts/run-tests.sh`) routes by file path and expects a `backend/` (FastAPI + pytest) and `frontend/` (vitest) layout — adjust the `BACKEND_DIR`/`FRONTEND_DIR` vars at the top if your repo differs. It needs `jq` available in the shell.
 
 ## Contributing
 
