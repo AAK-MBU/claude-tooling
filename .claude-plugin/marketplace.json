@@ -1,0 +1,17 @@
+{
+  "name": "claude-tooling",
+  "owner": {
+    "name": "AAK-MBU"
+  },
+  "metadata": {
+    "description": "Shared Claude Code agents, skills, and hooks for the team.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "core",
+      "source": "./plugins/core",
+      "description": "Core subagents, skills, and hooks: backend/frontend dev, code review, git, and an auto test-runner."
+    }
+  ]
+}

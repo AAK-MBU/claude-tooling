@@ -1,0 +1,8 @@
+{
+  "name": "core",
+  "version": "0.1.0",
+  "description": "Core subagents, skills, and hooks: backend/frontend dev, code review, git, and an auto test-runner.",
+  "author": {
+    "name": "AAK-MBU"
+  }
+}
