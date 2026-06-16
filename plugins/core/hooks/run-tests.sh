@@ -10,7 +10,17 @@ FRONTEND_DIR="frontend"   # package.json + vitest live here
 # -------------------------------------------
 
 input=$(cat)
-path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
+# Extract tool_input.file_path. Prefer jq; fall back to python3 when jq is
+# absent (otherwise the field comes back empty and the hook silently no-ops).
+if command -v jq >/dev/null 2>&1; then
+  path=$(printf '%s' "$input" | jq -r '.tool_input.file_path // empty')
+else
+  path=$(printf '%s' "$input" | python3 -c 'import json,sys
+try:
+    print(json.load(sys.stdin)["tool_input"].get("file_path","") or "")
+except Exception:
+    pass')
+fi
 [[ -z "$path" ]] && exit 0
 
 # normalise to a repo-relative path
