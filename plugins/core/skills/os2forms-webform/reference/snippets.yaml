@@ -1,0 +1,187 @@
+# Paste-ready OS2Forms building blocks. Adapt keys/titles per form.
+# Keep #states FLAT. See memory: reference-os2forms-webform-conditional-logic.
+#
+# GROUPING: prefer `webform_section` with '#title_tag': h3 over `fieldset`
+# (real heading hierarchy, better for screen readers/mobile). Use `fieldset`
+# only for bordered groups needing a legend; plain `container` for invisible
+# #states show/hide wrappers.
+
+# ── Applicant prefill (the MitID-logged citizen) ─────────────────
+# A page-1 section. Readonly identity from NemID/MitID;
+# contact fields are editable (not provided by MitID).
+dine_oplysninger:
+  '#type': webform_section
+  '#title': 'Dine oplysninger'
+  '#title_tag': h3
+  foraelder_navn:
+    '#type': os2forms_nemid_name
+    '#title': Navn
+    '#multiple': false
+    '#readonly': true
+    '#attributes':
+      style: 'max-width:35em; width:100%'
+  foraelder_adresse:
+    '#type': os2forms_nemid_address
+    '#title': Adresse
+    '#multiple': false
+    '#readonly': true
+    '#attributes':
+      style: 'max-width:35em; width:100%'
+  foraelder_kommune:
+    '#type': os2forms_nemid_kommunekode
+    '#title': 'Kommune '
+    '#multiple': false
+    '#readonly': true
+    '#flex': 0
+    '#states':
+      invisible:
+        ':input[name="foraelder_navn"]':
+          filled: true
+    '#states_clear': false
+    '#attributes':
+      style: 'max-width:35em; width:100%'
+  cpr_foraelder:
+    '#type': os2forms_nemid_cpr
+    '#title': 'Forælderens CPR-nummer'
+    '#multiple': false
+    '#readonly': true
+    '#states':
+      invisible:
+        ':input[name="foraelder_navn"]':
+          filled: true
+    '#states_clear': false
+    '#display_on': view
+    '#attributes':
+      style: 'max-width:35em; width:100%'
+  kontakt_tlf:
+    '#type': tel
+    '#title': 'Telefonnummer (privat)'
+  kontakt_mobil:
+    '#type': tel
+    '#title': Mobiltelefonnummer
+  kontakt_email:
+    '#type': email
+    '#title': E-mailadresse
+    '#required': true
+
+# ── Choose-child block (from CPR list, else manual) ──────────────
+barnets_oplysninger:
+  '#type': webform_section
+  '#title': 'Oplysninger om barnet'
+  '#title_tag': h3
+  vaelg_barn:
+    '#type': os2forms_nemid_children_select
+    '#title': 'Vælg dit barn fra listen'
+    '#states':
+      disabled:
+        ':input[name="mit_barn_kommer_ikke_frem_i_listen"]':
+          checked: true
+  mit_barn_kommer_ikke_frem_i_listen:
+    '#type': checkbox
+    '#title': 'Mit barn kommer ikke frem i listen'
+    '#states':
+      disabled:
+        ':input[name="vaelg_barn"]':
+          filled: true
+  container_mitid_oplysninger:
+    '#type': container
+    '#states':
+      visible:
+        ':input[name="mit_barn_kommer_ikke_frem_i_listen"]':
+          unchecked: true
+    barnets_navn_mitid:
+      '#type': os2forms_mitid_child_name
+      '#title': 'Barnets navn'
+      '#multiple': false
+      '#readonly': true
+      '#states':
+        visible:
+          ':input[name="vaelg_barn"]':
+            filled: true
+    barnets_cpr_nummer_mitid:
+      '#type': os2forms_mitid_child_cpr
+      '#title': 'Barnets CPR-nummer'
+      '#multiple': false
+      '#readonly': true
+      '#states':
+        visible:
+          ':input[name="vaelg_barn"]':
+            filled: true
+    barnets_adresse:
+      '#type': os2forms_mitid_child_address
+      '#title': 'Barnets adresse'
+      '#multiple': false
+      '#readonly': true
+      '#states':
+        visible:
+          ':input[name="vaelg_barn"]':
+            filled: true
+  container_manuelt:
+    '#type': container
+    '#states':
+      visible:
+        ':input[name="mit_barn_kommer_ikke_frem_i_listen"]':
+          checked: true
+    barnets_fulde_navn:
+      '#type': textfield
+      '#title': 'Barnets fulde navn'
+      '#description': '(Fornavn, mellemnavn, efternavn)'
+      '#required': true
+      '#states_clear': false
+    cpr_barnets_nummer:
+      '#type': textfield
+      '#title': 'Barnets CPR-nummer'
+      '#description': '<p>OBS! Angiv kun et dansk cpr-nummer.</p>'
+      '#input_mask': 999999-9999
+      '#pattern': '^(?:(?:31(?:0[13578]|1[02])|(?:30|29)(?:0[13-9]|1[0-2])|(?:0[1-9]|1[0-9]|2[0-8])(?:0[1-9]|1[0-2]))[0-9]{2}-?[0-9]|290200-?[4-9]|2902(?:(?!00)[02468][048]|[13579][26])-?[0-3])[0-9]{3}|000000-?0000$'
+      '#pattern_error': 'Angiv et korrekt cpr-nummer.'
+      '#states_clear': false
+      '#required': true
+    barnets_adresse_dawa:
+      '#type': os2forms_dawa_address
+      '#title': 'Barnets adresse'
+      '#remove_place_name': true
+      '#required': true
+
+# ── School year without yearly maintenance ───────────────────────
+skoleaar_valg:
+  '#type': radios
+  '#title': 'Hvilket skoleår søger du for?'
+  '#required': true
+  '#options':
+    indevaerende: 'Indeværende skoleår'
+    kommende: 'Kommende skoleår'
+skoleaar:
+  '#type': computed_twig
+  '#title': 'Skoleåret'
+  '#ajax': false           # #ajax:true on computed_twig => HTTP 500 in this build
+  '#display_on': both
+  '#template': |
+    {%- set m = "now"|date("n") -%}
+    {%- set y = "now"|date("Y") -%}
+    {%- set start = m >= 8 ? y : y - 1 -%}
+    {%- if data.skoleaar_valg == "kommende" -%}{%- set start = start + 1 -%}{%- endif -%}
+    {{ start }}/{{ start + 1 }}
+
+# ── Klassetrin dropdown ──────────────────────────────────────────
+klassetrin:
+  '#type': select
+  '#title': Klassetrin
+  '#required': true
+  '#empty_option': '- Vælg klassetrin -'
+  '#options':
+    '0': '0. klasse'
+    '1': '1. klasse'
+    '2': '2. klasse'
+    '3': '3. klasse'
+    '4': '4. klasse'
+    '5': '5. klasse'
+    '6': '6. klasse'
+    '7': '7. klasse'
+    '8': '8. klasse'
+    '9': '9. klasse'
+
+# ── Info/warning box when webform_message is disabled ────────────
+info_box:
+  '#type': webform_markup
+  '#markup': '<div style="padding:12px 16px;border-left:4px solid #5bc0de;background:#f2f8fb;border-radius:4px">Informationstekst her.</div>'
